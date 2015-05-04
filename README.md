@@ -2,7 +2,7 @@
 Wordpress Basic Dev Tools Plugin
 
 # Basic Dev Tools
-_ Contributors: rodtech
+(_) Contributors: rodtech
 _ Donate link: http://marsminds.com
 _ Tags: developer, developments, post types
 _ Requires at least: 3.0.1
