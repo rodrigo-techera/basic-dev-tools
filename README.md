@@ -1,8 +1,9 @@
 # basic-dev-tools
-Wordpress Basic Dev Tools Plugin
+A plugin with some Basic Tools For Development and Developers.
+Trying to be easier the way of the develop common things in WP.
 
 # Basic Dev Tools
-(_) Contributors: rodtech
+- Contributors: rodtech
 - Donate link: http://marsminds.com
 - Tags: developer, developments, post types
 - Requires at least: 3.0.1
@@ -10,9 +11,6 @@ Wordpress Basic Dev Tools Plugin
 - Stable tag: 4.3
 - License: GPLv2 or later
 - License URI: http://www.gnu.org/licenses/gpl-2.0.html
-
-A plugin with some Basic Tools For Development and Developers.
-Trying to be easier the way of the develop common things in WP.
 
 # Description
 
