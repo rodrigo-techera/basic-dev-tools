@@ -15,10 +15,11 @@ class Basic_Dev_Tools_Post_Type_Manager {
 								'post-formats' => 'Post Formats');
 
 	function __construct() {
-		require_once('table_object.php');
+		require_once('tableobject/table_object.php');
 
 		$params['table'] = $this->table_name;
 		$params['primary_key'] = 'id';
+		$params['primary_key_format'] = '%d';
 
 		$params['title'] = array(	'singular'=>'Post Type',
 									'plural'  =>'Post Types Manager');
@@ -30,19 +31,24 @@ class Basic_Dev_Tools_Post_Type_Manager {
 											'taxonomies' => 'Taxonomies');
 
 		$params['fields']['add']['post_type_key'] = array(	'title' => 'Key',
-															'render' => 'text');
+															'render' => 'text',
+															'format' => '%s');
 		$params['fields']['add']['name'] = array(	'title' => 'Plural Name',
-													'render' => 'text');
+													'render' => 'text',
+													'format' => '%s');
 		$params['fields']['add']['singular_name'] = array(	'title' => 'Singular Name',
-															'render' => 'text');
+															'render' => 'text',
+															'format' => '%s');
 		$params['fields']['add']['supports'] = array(	'title' => 'Supports',
 														'render' => 'checkboxes',
+														'format' => '%s',
 														'values' => $this->support_values);
 		$params['fields']['add']['taxonomies'] = array(	'title' => 'Custom Taxonomies',
 														'render' => 'nText',
+														'format' => '%s',
 														'values' => array('taxonomy_key', 'taxonomy_name'));
 		
-		$params['table_options']['final_sql'] = 'ORDER BY name ASC';
+		$params['table_options']['final_sql'] = 'ORDER BY name';
 
 		$this->table_object = new tableObject($params);
 		$this->table_object->add_before_save_filter(array($this, 'save_taxonomies'));
@@ -69,8 +75,8 @@ class Basic_Dev_Tools_Post_Type_Manager {
 
 	function plugin_deactivation() {
 		global $wpdb;
+		
 		$sql = 'DROP TABLE '.$this->table_name;
-
 		$wpdb->query($sql);
 	}
 
@@ -130,6 +136,62 @@ class Basic_Dev_Tools_Post_Type_Manager {
 				                  																'query_var' => true));
 				}
 		}
+	}
+
+	function process_shortcodes($atts) {
+		if(isset($atts['options']) && $atts['options']) {
+			$options = explode(',', $atts['options']);
+
+			unset($atts['options']);
+		} else
+			$options = array('title', 'thumbnail', 'excerpt', 'readmore');
+		
+
+	    query_posts($atts);
+	    while(have_posts()) {
+	    	the_post(); ?>
+			<div>
+				<?php foreach($options as $option) {
+					switch($option) {
+						case 'id':
+							?><div class="id"><?php the_ID();?></div><?php
+						break;
+						case 'title':
+							?><div class="title"><?php the_title();?></div><?php
+						break;
+						case 'thumbnail':
+							?><div class="thumbnail"><?php the_thumbnail();?></div><?php
+						break;
+						case 'excerpt':
+							?><div class="excerpt"><?php the_excerpt();?></div><?php
+						break;
+						case 'content':
+							?><div class="content"><?php the_content();?></div><?php
+						break;
+						case 'meta':
+							?><div class="meta"><?php the_meta();?></div><?php
+						break;
+						case 'author':
+							?><div class="author"><?php the_author();?></div><?php
+						break;
+						case 'readmore':
+							?><div class="readmore"><a href="<?php the_permalink();?>">read more</a></div><?php
+						break;
+						case 'category':
+							?><div class="category"><?php the_category();?></div><?php
+						break;
+						case 'tags':
+							?><div class="tags"><?php the_tags();?></div><?php
+						break;
+						case 'terms':
+							?><div class="tags"><?php the_terms();?></div><?php
+						break;
+					}
+				} ?>
+			</div>
+		<?php }
+
+		wp_reset_query();
 	}
 }
 

@@ -1,11 +1,14 @@
 <?php
 class tableObject {
+	var $instance_name;
 	var $title;
 	var $table;
 	var $primary_key;
+	var $primary_key_format;
 	var $actions;
 	var $page;
 	var $fields;
+	var $fields_format;
 	var $table_options;
 	var $filters_fieldShow;
 	var $filters_fieldAdd;
@@ -13,15 +16,10 @@ class tableObject {
 	var $filters_afterSave;
 	var $filters_beforeDelete;
 	var $filters_afterDelete;
+	var $templates;
 	var $error_msg;
 
 	function __construct($params) {
-		$this->table = $params['table'];
-		$this->primary_key = $params['primary_key'];
-		$this->title = $params['title'];
-		$this->fields = $params['fields'];
-		$this->table_options = $params['table_options'];
-		
 		$this->filters_fieldShow = array();
 		$this->filters_fieldAdd = array();
 		$this->filters_beforeSave = array();
@@ -34,35 +32,65 @@ class tableObject {
 								'edit' => true,
 								'delete' => true);
 
-		if(isset($params['actions']['list']) && $params['actions']['list']===false)
-			$this->actions['list'] = false;
+		$this->templates = array(	'directory' => 'templates',
+									'show' => 'generic_show.php',
+									'form' => 'generic_form.php');
 
-		if(isset($params['actions']['add']) && $params['actions']['add']===false)
-			$this->actions['add'] = false;
+		$this->table = $params['table'];
+		$this->primary_key = $params['primary_key'];
+		$this->primary_key_format = $params['primary_key_format'];
+		$this->title = $params['title'];
+		$this->fields = $params['fields'];
+		$this->table_options = $params['table_options'];
 
-		if(isset($params['actions']['edit']) && $params['actions']['edit']===false)
-			$this->actions['edit'] = false;
-
-		if(isset($params['actions']['delete']) && $params['actions']['delete']===false)
-			$this->actions['delete'] = false;
+		$this->instance_name = isset($params['instance_name'])?$params['instance_name']:'';
+		if($this->instance_name)
+			$this->instance_name .= '_';
 
 		$this->page = $_GET['page'];
 		$this->error_msg = array();
+	}
+
+	function set_action($action, $new_value) {
+		if(!$action || !array_key_exists($action, $this->actions))
+			return false;
+
+		$this->actions[$action] = $new_value;
+		return true;
+	}
+
+	function set_template($option, $new_value) {
+		if(!$option || !array_key_exists($option, $this->templates))
+			return false;
+
+		$this->templates[$option] = $new_value;
+		return true;
+	}
+
+	function set_table_options($option, $new_value) {
+		if(!$option)
+			return false;
+
+		$this->table_options[$option] = $new_value;
+		return true;
 	}
 
 	function init() {
 		$this->inject_css();
 		$this->inject_js();
 		
-		if(isset($_GET['add']) && $_GET['add']=='true') {
-			if($this->actions['add'])
+		$show_list = true;
+		if(isset($_GET[$this->instance_name.'add']) && $_GET[$this->instance_name.'add']=='true') {
+			if($this->actions['add']) {
 				$this->add();
-		} elseif(isset($_GET['edit']) && $_GET['edit']=='true' && isset($_GET['id']) && is_numeric($_GET['id']) && $_GET['id']) {
-			if($this->actions['edit'])
-				$this->edit($_GET['id']);
-		} elseif(isset($_GET['delete']) && $_GET['delete']=='true' && isset($_GET['id']) && is_numeric($_GET['id']) && $_GET['id']) {
+			}
+		} elseif(isset($_GET[$this->instance_name.'edit']) && $_GET[$this->instance_name.'edit']=='true' && isset($_GET[$this->instance_name.'id']) && is_numeric($_GET[$this->instance_name.'id']) && $_GET[$this->instance_name.'id']) {
+			if($this->actions['edit']) {
+				$this->edit($_GET[$this->instance_name.'id']);
+			}
+		} elseif(isset($_GET[$this->instance_name.'delete']) && $_GET[$this->instance_name.'delete']=='true' && isset($_GET[$this->instance_name.'id']) && is_numeric($_GET[$this->instance_name.'id']) && $_GET[$this->instance_name.'id']) {
 			if($this->actions['delete'])
-				$this->delete($_GET['id']);
+				$this->delete($_GET[$this->instance_name.'id']);
 		}
 
 		if($this->actions['list'])
@@ -92,13 +120,16 @@ class tableObject {
 		if(isset($this->table_options['final_sql']) && $this->table_options['final_sql'])
 			$get_rows_sql .= $this->table_options['final_sql'];
 		
-		$rows_array = $wpdb->get_results($get_rows_sql, ARRAY_A);
+		$rows_array = $wpdb->get_results($wpdb->prepare($get_rows_sql, $this->table_options['query_formats']), ARRAY_A);
 
 		return $rows_array;
 	}
 
 	function getRow($id) {
 		global $wpdb;
+
+		if(!$id || !is_numeric($id))
+			return false;
 
 		if($this->table_options['select'])
 			$get_row_sql = $this->table_options['select'];
@@ -120,85 +151,25 @@ class tableObject {
 		if($this->table_options['final_sql'])
 			$get_row_sql .= $this->table_options['final_sql'];
 
-		$get_row_sql = 'SELECT * FROM '.$this->table.' WHERE '.$this->primary_key.'='.$id;
-		$row_array = $wpdb->get_row($wpdb->prepare($get_row_sql,''), ARRAY_A);
+		$get_row_sql = 'SELECT * FROM '.$this->table.' WHERE '.$this->primary_key.'='.$this->primary_key_format;
+		$row_array = $wpdb->get_row($wpdb->prepare($get_row_sql, array($id)), ARRAY_A);
 
 		return $row_array;
 	}
 
 	function show() {
 		$rows = $this->getRows();
-		?>
-		<div tabindex="0" aria-label="Main content" id="wpbody-content">
-			<div class="wrap">
-				<div class="icon32 icon32-posts-post" id="icon-edit"><br></div>
-				<h2>
-					<?php echo $this->title['plural'];?> 
-					<?php if($this->actions['add']) { ?><a class="add-new-h2" href="/wp-admin/admin.php?page=<?php echo $this->page;?>&add=true">Add New <?php echo $this->title['singular'];?></a><?php } ?>
-				</h2>
-				<div class="tablenav top">
-					<div class="tablenav-pages one-page"><span class="displaying-num"><?php echo count($rows);?> item/s</span></div>
-					<table cellspacing="0" class="wp-list-table widefat fixed posts">
-						<thead>
-							<tr>
-								<th class="manage-column column-cd check-column" scope="col"></th>
-								<?php foreach($this->fields['show'] as $field_code=>$field_title) { ?>
-									<?php if($this->primary_key==$field_code) { ?>
-										<th class="manage-column id" scope="col"><?php echo $field_title;?></th>
-									<?php } else { ?>
-										<th class="manage-column <?php echo $field_code;?>" scope="col"><?php echo $field_title;?></th>
-									<?php }?>
-								<?php } ?>
-							</tr>
-						</thead>
-						<tfoot>
-							<tr>
-								<th class="manage-column column-cd check-column" scope="col"></th>
-								<?php foreach($this->fields['show'] as $field_code=>$field_title) { ?>
-									<?php if($this->primary_key==$field_code) { ?>
-										<th class="manage-column id" scope="col"><?php echo $field_title;?></th>
-									<?php } else { ?>
-										<th class="manage-column <?php echo $field_code;?>" scope="col"><?php echo $field_title;?></th>
-									<?php }?>
-								<?php } ?>
-							</tr>
-						</tfoot>
-						<tbody id="the-list">
-							<?php if(is_array($rows) && count($rows)>0) { foreach($rows as $row_index=>$row_values) { ?>
-							<tr valign="top" class="type-post status-publish format-standard hentry category-uncategorized alternate iedit author-self">
-								<th class="check-column" scope="row"></th>
-								<?php $first_row=true; foreach($this->fields['show'] as $field_code=>$field_title) {
-									if($this->primary_key==$field_code) { ?>
-										<td class="id"><?php echo $row_values[$field_code];?></td>
-									<?php } else {
-										$row_values[$field_code] = $this->apply_show_filters($field_code, $row_values);
-										if($first_row) { $first_row=false;?>
-											<td class="post-title page-title column-title">
-												<?php if($this->actions['edit']) { ?><strong><a title="Edit “<?php echo $row_values[$field_code];?>”" href="/wp-admin/admin.php?page=<?php echo $this->page;?>&edit=true&id=<?php echo $row_values[$this->primary_key];?>" class="row-title"><?php } ?>
-													<?php echo $row_values[$field_code];?>
-												<?php if($this->actions['edit']) { ?></a></strong><?php } ?>
-												<div class="row-actions">
-													<?php if($this->actions['edit']) { ?><span class="edit"><a title="Edit this <?php echo $this->title['singular'];?>" href="/wp-admin/admin.php?page=<?php echo $this->page;?>&edit=true&id=<?php echo $row_values[$this->primary_key];?>">Edit</a> | </span><?php } ?>
-													<?php if($this->actions['delete']) { ?><span class="trash"><a  title="Delete this <?php echo $this->title['singular'];?>" href="/wp-admin/admin.php?page=<?php echo $this->page;?>&delete=true&id=<?php echo $row_values[$this->primary_key];?>" class="submitdelete" onclick="if(!confirm('Are you sure you want to delete this?')) { return false;}">Delete</a></span><?php } ?>
-												</div>
-											</td>
-										<?php } else { ?>
-											<td class="<?php echo $field_code;?>"><?php echo $row_values[$field_code];?></td>
-										<?php } ?>
-									<?php } ?>
-								<?php } ?>
-							</tr>
-							<?php }} ?>
-						</tbody>
-					</table>
-					<div class="tablenav bottom">
-						<div class="alignleft actions"></div>
-						<div class="tablenav-pages one-page"><span class="displaying-num"><?php echo count($rows);?> item/s</span></div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<?php
+		
+		if(isset($this->table_options['display_array']) && is_array($this->table_options['display_array']) && count($this->table_options['display_array'])>0) {
+			$display_array = array_reverse($this->table_options['display_array'], true);
+			foreach($display_array as $array_key=>$array_value) {
+				$array_value['protected'] = true;
+				array_unshift($rows, $array_value);
+			}
+		}
+
+		$template = $this->templates['directory'].'/'.$this->templates['show'];
+		include_once($template);
 	}
 
 	function show_form() {
@@ -218,18 +189,26 @@ class tableObject {
 			//reset POST with the output of the filters
 			$_POST = $fields;
 
-			if($_GET['save'] && !count($this->error_msg)>0) {
+			if($_GET[$this->instance_name.'save'] && !count($this->error_msg)>0) {
 				global $wpdb;
-				unset($fields['id']);
+
+				if(isset($fields['id']))
+					unset($fields['id']);
 				
 				$fields = $this->apply_before_save_filters($fields);
+				
+				$fields_format = array();
+				foreach($fields as $field_name=>$field_value)
+					$fields_format[] = $this->fields['add'][$field_name]['format'];
 
 				if($_REQUEST['id']) {
 					$where[$this->primary_key] = $_REQUEST['id'];
-					$result = $wpdb->update($this->table, $fields, $where);
+					$where_format[$this->primary_key] = $this->primary_key_format;
+					
+					$result = $wpdb->update($this->table, $fields, $where, $fields_format, $where_format);
 					$id = $_REQUEST['id'];
 				} else {
-					$result = $wpdb->insert($this->table, $fields);
+					$result = $wpdb->insert($this->table, $fields, $fields_format);
 					$id = $wpdb->insert_id;
 				}
 
@@ -243,40 +222,9 @@ class tableObject {
 				return;
 			}
 		}
-		?>
-		<?php if(isset($_GET['id']) && $_GET['id']) { ?>
-			<h2>Update <?php echo $this->title['singular'];?> <a class="add-new-h2" href="/wp-admin/admin.php?page=<?php echo $this->page;?>">cancel</a></h2>
-		<?php } else { ?>
-			<h2>Add New <?php echo $this->title['singular'];?> <a class="add-new-h2" href="/wp-admin/admin.php?page=<?php echo $this->page;?>">cancel</a></h2>
-		<?php } ?>
-		<form method="post" action="/wp-admin/admin.php?<?php echo $_SERVER['QUERY_STRING'];?>&save=true" enctype="multipart/form-data">
-			<input type="hidden" name="id" value="<?php if(isset($_GET['id'])) echo $_GET['id'];?>">
-			<table id="add" cellspacing="0" cellpadding="10" border="0">
-				<?php if(count($this->error_msg)>0) { ?>
-				<tr>
-					<td colspan="2" class="error">
-						<?php foreach($this->error_msg as $msg) {?>
-							<p><?php echo $msg;?></p>
-						<?php }?>
-					</td>
-				</tr>
-				<?php } ?>
-				<?php foreach($this->fields['add'] as $field_name=>$field_settings) { ?>
-					<?php if($this->primary_key==$field_name) { ?>
-						<input type="hidden" name="id" value="<?php echo $_POST[$field_name];?>" />
-					<?php } else { ?>
-						<tr id="row_<?php echo $field_name;?>">
-							<td style="width:50%;"><label style="margin-right: 5%;"><?php echo $field_settings['title'];?>:</label></td>
-							<td style="width:40%;"><?php echo $this->render_field($field_name, $field_settings);?></td>
-						</tr>
-					<?php } ?>
-				<?php } ?>
-				<tr>
-					<td colspan="2" style="text-align:right;"><input type="submit" value="<?php if(isset($_GET['id']) && $_GET['id']) { ?>Update<?php } else { ?>Create<?php } ?>" /></td>
-				</tr>
-			</table>
-		</form>
-	<?php
+
+		$template = $this->templates['directory'].'/'.$this->templates['form'];
+		include_once($template);
 	}
 
 	function add() {
@@ -291,14 +239,14 @@ class tableObject {
 	}
 
 	function delete($id) {
-		if(is_numeric($id) && $id>0) {
+		if($id && is_numeric($id) && $id>0) {
 			global $wpdb;
 
 			$fields_values = $this->getRow($id);
 			$this->apply_before_delete_filters($fields_values);
 
-			$delete_sql = 'DELETE FROM '.$this->table.' WHERE '.$this->primary_key.'='.$id;
-			$wpdb->query($delete_sql);
+			$where[$this->primary_key] = $id;
+			$wpdb->delete($this->table, $where, $this->primary_key_format);
 
 			$this->apply_after_delete_filters($fields_values);
 

@@ -19,6 +19,8 @@ function marsminds_basic_dev_tools_init() {
 	
 	global $basic_dev_tools_post_type_manager_obj;
 	$basic_dev_tools_post_type_manager_obj->add_post_types();
+
+	add_shortcode('bdt_post_type', array($basic_dev_tools_post_type_manager_obj, 'process_shortcodes'));
 }
 
 function marsminds_basic_dev_tools_add_menus() {
