@@ -47,4 +47,4 @@ Because you haven't asked one yet.
 * Removed Cron Task Manager menu to implement in version 2
 
 1.0
-** Initial Release
+* Initial Release
