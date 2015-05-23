@@ -1,8 +1,8 @@
-# basic-dev-tools
+# Basic Dev Tools
+
 A plugin with some Basic Tools For Development and Developers.
 Trying to be easier the way of the develop common things in WP.
 
-# Basic Dev Tools
 - Contributors: rodtech
 - Donate link: http://marsminds.com
 - Tags: developer, developments, post types
