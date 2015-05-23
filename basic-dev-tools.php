@@ -8,7 +8,12 @@
  * Author URI: http://marsminds.com
  */
 
+
+//TODO
+//$wpdb->prefix
+
 defined('ABSPATH') or die('No script kiddies please!');
+require_once(plugin_dir_path(__FILE__).'includes/settings-manager.php');
 require_once(plugin_dir_path(__FILE__).'includes/cron-manager.php');
 require_once(plugin_dir_path(__FILE__).'includes/post-type-manager.php');
 
@@ -20,6 +25,9 @@ function marsminds_basic_dev_tools_init() {
 	global $basic_dev_tools_post_type_manager_obj;
 	$basic_dev_tools_post_type_manager_obj->add_post_types();
 
+	global $basic_dev_tools_settings_manager_obj;
+	$basic_dev_tools_settings_manager_obj->apply_special_settings();
+
 	add_shortcode('bdt_post_type', array($basic_dev_tools_post_type_manager_obj, 'process_shortcodes'));
 }
 
@@ -27,6 +35,7 @@ function marsminds_basic_dev_tools_add_menus() {
 	global $basic_dev_tools_cron_manager_obj, $basic_dev_tools_post_type_manager_obj;
 	
 	add_menu_page('Basic Dev Tools', 'Basic Dev Tools', 'manage_options', 'basic-dev-tools/includes/index.php', '', '', 90);
+	add_submenu_page('basic-dev-tools/includes/index.php', 'Special Settings', 'Special Settings', 'manage_options', 'basic-dev-tools/includes/index.php');
 	add_submenu_page('basic-dev-tools/includes/index.php', 'Cron Manager', 'Cron Manager', 'manage_options', 'basic-dev-tools/includes/cron-manager.php', array($basic_dev_tools_cron_manager_obj, 'show'));
 	add_submenu_page('basic-dev-tools/includes/index.php', 'Post Type Manager', 'Post Type Manager', 'manage_options', 'basic-dev-tools/includes/post-type-manager.php', array($basic_dev_tools_post_type_manager_obj, 'show'));
 }

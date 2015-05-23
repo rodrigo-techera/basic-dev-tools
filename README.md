@@ -8,14 +8,16 @@ Trying to be easier the way of the develop common things in WP.
 - Tags: developer, developments, post types
 - Requires at least: 3.0.1
 - Tested up to: 3.4
-- Stable tag: 4.3
+- Stable tag: 1.3
 - License: GPLv2 or later
 - License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 # Description
 
-A plugin with some Basic Tools For Development and Developers.
-Trying to be easier the way of the develop common things in WP.
+A plugin developed thinking in the common or special things that a developer could need at the time of build an app in WP.
+1. Special Settings
+1. Cron Task and Schedules Manager
+1. Post Types Manager with shotcodes
 
 # Installation
 
@@ -32,6 +34,13 @@ A new menu appears allowing you to use the tools.
 Because you haven't asked one yet.
 
 # Changelog
+
+1.3 (2015-05-23)
+* tableobject api updated
+* Added Crons Manager Functionality with posibilty of create and execute tasks
+* Added Cron Schedules to global wp filter
+* Added Special Settings to manage common thing faster
+* Screenshots added
 
 1.2 (2015-05-03)
 * tableobject api updated

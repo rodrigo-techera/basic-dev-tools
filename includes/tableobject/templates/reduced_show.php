@@ -5,7 +5,7 @@
 </style>
 <h3>
 	<?php echo $this->title['plural'];?> 
-	<?php if($this->actions['add']) { ?><a class="add-new-h2" href="/wp-admin/admin.php?page=<?php echo $this->page;?>&<?php echo $this->instance_name;?>add=true">New <?php echo $this->title['singular'];?></a><?php } ?>
+	<?php if($this->actions['add']) { ?><a class="add-new-h2 secondary" href="/wp-admin/admin.php?page=<?php echo $this->page;?>&<?php echo $this->instance_name;?>add=true">New <?php echo $this->title['singular'];?></a><?php } ?>
 </h3>
 <table cellspacing="0" class="wp-list-table widefat fixed crons">
 	<thead>

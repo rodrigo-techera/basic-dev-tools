@@ -116,7 +116,7 @@ class Basic_Dev_Tools_Post_Type_Manager {
 	}
 
 	function add_post_types() {
-		$post_types = $this->table_object->getRows();
+		$post_types = $this->table_object->get_rows();
 		foreach($post_types as $post_type_values) {
 			$supports = unserialize($post_type_values['supports']);
 			$taxonomies = unserialize($post_type_values['taxonomies']);

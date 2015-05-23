@@ -97,7 +97,7 @@ class tableObject {
 			$this->show();
 	}
 
-	function getRows() {
+	function get_rows() {
 		global $wpdb;
 
 		if($this->table_options['select'])
@@ -125,7 +125,7 @@ class tableObject {
 		return $rows_array;
 	}
 
-	function getRow($id) {
+	function get_row($id) {
 		global $wpdb;
 
 		if(!$id || !is_numeric($id))
@@ -158,7 +158,7 @@ class tableObject {
 	}
 
 	function show() {
-		$rows = $this->getRows();
+		$rows = $this->get_rows();
 		
 		if(isset($this->table_options['display_array']) && is_array($this->table_options['display_array']) && count($this->table_options['display_array'])>0) {
 			$display_array = array_reverse($this->table_options['display_array'], true);
@@ -189,37 +189,39 @@ class tableObject {
 			//reset POST with the output of the filters
 			$_POST = $fields;
 
-			if($_GET[$this->instance_name.'save'] && !count($this->error_msg)>0) {
+			if($_GET[$this->instance_name.'save']) {
 				global $wpdb;
 
-				if(isset($fields['id']))
-					unset($fields['id']);
-				
 				$fields = $this->apply_before_save_filters($fields);
-				
-				$fields_format = array();
-				foreach($fields as $field_name=>$field_value)
-					$fields_format[] = $this->fields['add'][$field_name]['format'];
 
-				if($_REQUEST['id']) {
-					$where[$this->primary_key] = $_REQUEST['id'];
-					$where_format[$this->primary_key] = $this->primary_key_format;
+				if(!count($this->error_msg)>0) {
+					if(isset($fields['id']))
+						unset($fields['id']);
+
+					$fields_format = array();
+					foreach($fields as $field_name=>$field_value)
+						$fields_format[] = $this->fields['add'][$field_name]['format'];
+
+					if($_REQUEST['id']) {
+						$where[$this->primary_key] = $_REQUEST['id'];
+						$where_format[$this->primary_key] = $this->primary_key_format;
+						
+						$result = $wpdb->update($this->table, $fields, $where, $fields_format, $where_format);
+						$id = $_REQUEST['id'];
+					} else {
+						$result = $wpdb->insert($this->table, $fields, $fields_format);
+						$id = $wpdb->insert_id;
+					}
+
+					$fields['id'] = $id;
+
+					$fields = $this->apply_after_save_filters($fields);
+					unset($_POST, $_GET);
 					
-					$result = $wpdb->update($this->table, $fields, $where, $fields_format, $where_format);
-					$id = $_REQUEST['id'];
-				} else {
-					$result = $wpdb->insert($this->table, $fields, $fields_format);
-					$id = $wpdb->insert_id;
+					$request_uri = str_replace('add=true', '', str_replace('edit=true', '', str_replace('save=true', '', $_SERVER['REQUEST_URI'])));
+					echo '<script language="javascript">document.location="'.$request_uri.'";</script>';
+					return;
 				}
-
-				$fields['id'] = $id;
-
-				$fields = $this->apply_after_save_filters($fields);
-				unset($_POST, $_GET);
-				
-				$request_uri = str_replace('add=true', '', str_replace('edit=true', '', str_replace('save=true', '', $_SERVER['REQUEST_URI'])));
-				echo '<script language="javascript">document.location="'.$request_uri.'";</script>';
-				return;
 			}
 		}
 
@@ -233,7 +235,7 @@ class tableObject {
 
 	function edit($id) {
 		if(!$_POST)
-			$_POST = $this->getRow($id);
+			$_POST = $this->get_row($id);
 
 		$this->show_form();
 	}
@@ -242,7 +244,7 @@ class tableObject {
 		if($id && is_numeric($id) && $id>0) {
 			global $wpdb;
 
-			$fields_values = $this->getRow($id);
+			$fields_values = $this->get_row($id);
 			$this->apply_before_delete_filters($fields_values);
 
 			$where[$this->primary_key] = $id;
@@ -285,7 +287,10 @@ class tableObject {
 			foreach($this->filters_fieldAdd[$field_code] as $filter_index=>$function_name) {
 				if(method_exists($this, $function_name))
 					$field_value = $this->$function_name($field_code, $field_value);
-				else
+				elseif(is_array($function_name)) {
+					if(method_exists($function_name[0], $function_name[1]))
+						$field_value = $function_name[0]->$function_name[1]($field_value);
+				} else
 					$field_value = call_user_func($function_name, $field_value);
 			}
 		
@@ -304,7 +309,7 @@ class tableObject {
 		foreach($this->filters_beforeSave as $filter_index=>$function_name) {
 			if(is_array($function_name)) {
 				if(method_exists($function_name[0], $function_name[1]))
-					$fields_values = $function_name[0]->$function_name[1]($fields_values);
+					$fields_values = $function_name[0]->$function_name[1]($fields_values, $this);
 			} elseif(is_string($function_name))
 				$fields_values = call_user_func($function_name, $fields_values);
 		}
@@ -400,7 +405,7 @@ class tableObject {
 						foreach($field_settings['values'] as $input_name) {
 							$result .= '<input type="text" name="'.$input_name.'[]" value="'.$values[$input_name][$i].'"> ';
 						}
-						$result .= '<a href="#" class="nText_delete_button"'.($positions_qty<=1?'style="display:none;"':'').'>x</a></span>';
+						$result .= '<a href="#" class="nText_delete_button"'.($positions_qty<=1?' style="display:none;"':'').'>x</a></span>';
 					}
 				} else {
 					$result .= '<span>';

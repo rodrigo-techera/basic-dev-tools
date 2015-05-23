@@ -9,9 +9,7 @@
 		<?php if(count($this->error_msg)>0) { ?>
 		<tr>
 			<td colspan="2" class="error">
-				<?php foreach($this->error_msg as $msg) {?>
-					<p><?php echo $msg;?></p>
-				<?php }?>
+				<div class="error"><p><?php echo implode('</p><p>', $this->error_msg);?></p></div>
 			</td>
 		</tr>
 		<?php } ?>
@@ -26,7 +24,7 @@
 			<?php } ?>
 		<?php } ?>
 		<tr>
-			<td colspan="2" style="text-align:right;"><input type="submit" value="<?php if(isset($_GET[$this->instance_name.'id']) && $_GET[$this->instance_name.'id']) { ?>Update<?php } else { ?>Create<?php } ?>" /></td>
+			<td colspan="2" style="text-align:right;"><input type="submit" class="button-primary" value="<?php if(isset($_GET[$this->instance_name.'id']) && $_GET[$this->instance_name.'id']) { ?>Update<?php } else { ?>Create<?php } ?>" /></td>
 		</tr>
 	</table>
 </form>
