@@ -3,6 +3,10 @@
 A plugin with some Basic Tools For Development and Developers.
 Trying to be easier the way of the develop common things in WP.
 
+Wordpress Plugin: https://wordpress.org/plugins/basic-dev-tools/
+Wordpress Profile: https://profiles.wordpress.org/rodtech
+Personal Profile: http://rodmind.com/
+
 - Contributors: rodtech
 - Donate link: http://marsminds.com
 - Tags: developer, developments, post types
