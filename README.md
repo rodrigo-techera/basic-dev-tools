@@ -35,6 +35,16 @@ Because you haven't asked one yet.
 
 # Changelog
 
+1.4.1 (2015-05-24)
+* Added "Hide Admin Bar" Special Setting
+* Added "Disable Theme Updates" Special Setting
+* Added "Disable Plugin Updates" Special Setting
+* Added "Disable Core Updates" Special Setting
+* Screenshot changed
+
+1.4 (2015-05-24)
+* Bug with files in svn fixed
+
 1.3 (2015-05-23)
 * tableobject api updated
 * Added Crons Manager Functionality with posibilty of create and execute tasks
