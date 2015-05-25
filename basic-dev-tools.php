@@ -3,7 +3,7 @@
  * Plugin Name: Basic Dev Tools plugin
  * Plugin URI: http://marsminds.com
  * Description: Basic Tools and Functions for Development
- * Version: 1
+ * Version: 1.4.1
  * Author: Marsminds
  * Author URI: http://marsminds.com
  */
